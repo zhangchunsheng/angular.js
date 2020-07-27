@@ -8,18 +8,10 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
     if (restrictBrowsers) {
       // TODO(braden): Once we have other touch-friendly browsers on CI, allow them here.
       // Currently Firefox and IE refuse to fire touch events.
-      var chrome = /chrome/.test(navigator.userAgent.toLowerCase());
+      var chrome = /chrome/.test(window.navigator.userAgent.toLowerCase());
       if (!chrome) {
         return;
       }
-    }
-
-    // Skip tests on IE < 9. These versions of IE don't support createEvent(), and so
-    // we cannot control the (x,y) position of events.
-    // It works fine in IE 8 under manual testing.
-    var msie = +((/msie (\d+)/.exec(navigator.userAgent.toLowerCase()) || [])[1]);
-    if (msie < 9) {
-      return;
     }
 
     beforeEach(function() {
@@ -35,8 +27,16 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
       $rootScope.$digest();
       expect($rootScope.swiped).toBeUndefined();
 
-      browserTrigger(element, startEvent, [], 100, 20);
-      browserTrigger(element, endEvent, [], 20, 20);
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 100,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
       expect($rootScope.swiped).toBe(true);
     }));
 
@@ -45,9 +45,52 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
       $rootScope.$digest();
       expect($rootScope.swiped).toBeUndefined();
 
-      browserTrigger(element, startEvent, [], 20, 20);
-      browserTrigger(element, endEvent, [], 90, 20);
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 90,
+        y: 20
+      });
       expect($rootScope.swiped).toBe(true);
+    }));
+
+    it('should only swipe given ng-swipe-disable-mouse attribute for touch events', inject(function($rootScope, $compile) {
+      element = $compile('<div ng-swipe-left="swiped = true" ng-swipe-disable-mouse></div>')($rootScope);
+      $rootScope.$digest();
+      expect($rootScope.swiped).toBeUndefined();
+
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 100,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
+      expect(!!$rootScope.swiped).toBe(description !== 'mouse');
+    }));
+
+    it('should pass event object', inject(function($rootScope, $compile) {
+      element = $compile('<div ng-swipe-left="event = $event"></div>')($rootScope);
+      $rootScope.$digest();
+
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 100,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
+      expect($rootScope.event).toBeDefined();
     }));
 
     it('should not swipe if you move too far vertically', inject(function($rootScope, $compile, $rootElement) {
@@ -57,9 +100,21 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
 
       expect($rootScope.swiped).toBeUndefined();
 
-      browserTrigger(element, startEvent, [], 90, 20);
-      browserTrigger(element, moveEvent, [], 70, 200);
-      browserTrigger(element, endEvent, [], 20, 20);
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 90,
+        y: 20
+      });
+      browserTrigger(element, moveEvent, {
+        keys: [],
+        x: 70,
+        y: 200
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
 
       expect($rootScope.swiped).toBeUndefined();
     }));
@@ -71,8 +126,16 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
 
       expect($rootScope.swiped).toBeUndefined();
 
-      browserTrigger(element, startEvent, [], 90, 20);
-      browserTrigger(element, endEvent, [], 80, 20);
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 90,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 80,
+        y: 20
+      });
 
       expect($rootScope.swiped).toBeUndefined();
     }));
@@ -84,8 +147,16 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
 
       expect($rootScope.swiped).toBeUndefined();
 
-      browserTrigger(element, startEvent, [], 20, 20);
-      browserTrigger(element, moveEvent, [], 40, 20);
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
+      browserTrigger(element, moveEvent, {
+        keys: [],
+        x: 40,
+        y: 20
+      });
 
       expect($rootScope.swiped).toBeUndefined();
     }));
@@ -97,8 +168,16 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
 
       expect($rootScope.swiped).toBeUndefined();
 
-      browserTrigger(element, moveEvent, [], 10, 20);
-      browserTrigger(element, endEvent, [], 90, 20);
+      browserTrigger(element, moveEvent, {
+        keys: [],
+        x: 10,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 90,
+        y: 20
+      });
 
       expect($rootScope.swiped).toBeUndefined();
     }));
@@ -114,8 +193,16 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
         eventFired = true;
       });
 
-      browserTrigger(element, startEvent, [], 100, 20);
-      browserTrigger(element, endEvent, [], 20, 20);
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 100,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
       expect(eventFired).toEqual(true);
     }));
 
@@ -130,13 +217,21 @@ var swipeTests = function(description, restrictBrowsers, startEvent, moveEvent, 
         eventFired = true;
       });
 
-      browserTrigger(element, startEvent, [], 20, 20);
-      browserTrigger(element, endEvent, [], 100, 20);
+      browserTrigger(element, startEvent, {
+        keys: [],
+        x: 20,
+        y: 20
+      });
+      browserTrigger(element, endEvent, {
+        keys: [],
+        x: 100,
+        y: 20
+      });
       expect(eventFired).toEqual(true);
     }));
   });
-}
+};
 
-swipeTests('touch', true  /* restrictBrowers */, 'touchstart', 'touchmove', 'touchend');
-swipeTests('mouse', false /* restrictBrowers */, 'mousedown',  'mousemove', 'mouseup');
+swipeTests('touch', /* restrictBrowsers */ true, 'touchstart', 'touchmove', 'touchend');
+swipeTests('mouse', /* restrictBrowsers */ false, 'mousedown', 'mousemove', 'mouseup');
 

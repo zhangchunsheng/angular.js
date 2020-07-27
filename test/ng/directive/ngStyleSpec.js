@@ -23,6 +23,42 @@ describe('ngStyle', function() {
   }));
 
 
+  it('should not deep watch objects', inject(function($rootScope, $compile) {
+    element = $compile('<div ng-style="{height: heightObj}"></div>')($rootScope);
+    $rootScope.$digest();
+    expect(parseInt(element.css('height') + 0, 10)).toEqual(0); // height could be '' or '0px'
+    $rootScope.heightObj = {toString: function() { return '40px'; }};
+    $rootScope.$digest();
+    expect(element.css('height')).toBe('40px');
+
+    element.css('height', '10px');
+    $rootScope.heightObj.otherProp = 123;
+    $rootScope.$digest();
+    expect(element.css('height')).toBe('10px');
+  }));
+
+
+  it('should support binding for object literals', inject(function($rootScope, $compile) {
+    element = $compile('<div ng-style="{height: heightStr}"></div>')($rootScope);
+    $rootScope.$digest();
+    expect(parseInt(element.css('height') + 0, 10)).toEqual(0); // height could be '' or '0px'
+    $rootScope.$apply('heightStr = "40px"');
+    expect(element.css('height')).toBe('40px');
+
+    $rootScope.$apply('heightStr = "100px"');
+    expect(element.css('height')).toBe('100px');
+  }));
+
+
+  it('should support lazy one-time binding for object literals', inject(function($rootScope, $compile) {
+    element = $compile('<div ng-style="::{height: heightStr}"></div>')($rootScope);
+    $rootScope.$digest();
+    expect(parseInt(element.css('height') + 0, 10)).toEqual(0); // height could be '' or '0px'
+    $rootScope.$apply('heightStr = "40px"');
+    expect(element.css('height')).toBe('40px');
+  }));
+
+
   describe('preserving styles set before and after compilation', function() {
     var scope, preCompStyle, preCompVal, postCompStyle, postCompVal, element;
 
@@ -33,7 +69,7 @@ describe('ngStyle', function() {
       postCompVal = '100px';
       element = jqLite('<div ng-style="styleObj"></div>');
       element.css(preCompStyle, preCompVal);
-      jqLite(document.body).append(element);
+      jqLite(window.document.body).append(element);
       $compile(element)($rootScope);
       scope = $rootScope;
       scope.styleObj = {'margin-top': '44px'};
@@ -83,6 +119,50 @@ describe('ngStyle', function() {
       scope.$apply();
       expect(element.css(preCompStyle)).not.toBe('88px');
       expect(element.css(postCompStyle)).not.toBe('99px');
+    });
+
+    it('should clear style when the new model is null', function() {
+      scope.styleObj = {'height': '99px', 'width': '88px'};
+      scope.$apply();
+      expect(element.css(preCompStyle)).toBe('88px');
+      expect(element.css(postCompStyle)).toBe('99px');
+      scope.styleObj = null;
+      scope.$apply();
+      expect(element.css(preCompStyle)).not.toBe('88px');
+      expect(element.css(postCompStyle)).not.toBe('99px');
+    });
+
+    it('should clear style when the value is undefined or null', function() {
+      scope.styleObj = {'height': '99px', 'width': '88px'};
+      scope.$apply();
+      expect(element.css(preCompStyle)).toBe('88px');
+      expect(element.css(postCompStyle)).toBe('99px');
+      scope.styleObj = {'height': undefined, 'width': null};
+      scope.$apply();
+      expect(element.css(preCompStyle)).not.toBe('88px');
+      expect(element.css(postCompStyle)).not.toBe('99px');
+    });
+
+    it('should clear style when the value is false', function() {
+      scope.styleObj = {'height': '99px', 'width': '88px'};
+      scope.$apply();
+      expect(element.css(preCompStyle)).toBe('88px');
+      expect(element.css(postCompStyle)).toBe('99px');
+      scope.styleObj = {'height': false, 'width': false};
+      scope.$apply();
+      expect(element.css(preCompStyle)).not.toBe('88px');
+      expect(element.css(postCompStyle)).not.toBe('99px');
+    });
+
+    it('should set style when the value is zero', function() {
+      scope.styleObj = {'height': '99px', 'width': '88px'};
+      scope.$apply();
+      expect(element.css(preCompStyle)).toBe('88px');
+      expect(element.css(postCompStyle)).toBe('99px');
+      scope.styleObj = {'height': 0, 'width': 0};
+      scope.$apply();
+      expect(element.css(preCompStyle)).toBe('0px');
+      expect(element.css(postCompStyle)).toBe('0px');
     });
   });
 });
